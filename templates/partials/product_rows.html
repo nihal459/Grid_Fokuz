@@ -1,0 +1,44 @@
+{% for product in products %}
+<tr>
+    <td>
+        {% if product.product_image %}
+            <img src="{{ product.product_image.url }}" alt="Product Image" width="70" height="70" 
+                 data-bs-toggle="modal" data-bs-target="#imageModal{{ product.id }}" style="cursor: pointer;">
+            
+            <!-- Modal -->
+            <div class="modal fade" id="imageModal{{ product.id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ product.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="imageModalLabel{{ product.id }}">Product Image</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img src="{{ product.product_image.url }}" alt="Product Image" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            No Image
+        {% endif %}
+    </td>
+    <td>{{ product.product_name }}</td>
+    <td>{{ product.vendor.name }}</td>
+    <td>{{ product.product_category.name }}</td>
+    <td>{{ product.product_subcategory.name }}</td>
+    {% if request.user.is_admin %}
+    <td>{{ product.vendor_price }}</td>
+    {% endif %}
+    <td>{{ product.mrp }}</td>
+    <td>
+        <button class="btn btn-warning btn-sm add-to-pdf" data-product-id="{{ product.pk }}">
+            Add To PDF
+        </button>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="8" class="text-center">No products found.</td>
+</tr>
+{% endfor %}

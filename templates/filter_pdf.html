@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Load jQuery first -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Filter For PDF</h5>
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-semibold mb-4">Advanced Filters</h5>
+                    <form id="filterForm">
+                        <div class="row">
+                            <!-- Search Input -->
+                            <div class="col-md-12">
+                                <label for="search">Search Product:</label>
+                                <input type="text" id="search" name="q" class="form-control filter-input">
+                            </div>
+                
+                            <!-- Vendor Filter -->
+                            <div class="col-md-4 mt-4">
+                                <label>Vendor:</label>
+                                <input type="text" class="form-control search-filter" placeholder="Search Vendor..." data-target="vendorList">
+                                <div class="border p-2 overflow-auto" style="max-height: 180px; height:180px;">
+                                    <input type="checkbox" id="selectAllVendors"> <label for="selectAllVendors"><strong>Select All</strong></label>
+                                    {% for vendor in vendors %}
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input filter-input" name="vendor" value="{{ vendor.id }}">
+                                            <label class="form-check-label">{{ vendor.name }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Category Filter -->
+                            <div class="col-md-4 mt-4">
+                                <label>Category:</label>
+                                <input type="text" class="form-control search-filter" placeholder="Search Category..." data-target="categoryList">
+                                <div class="border p-2 overflow-auto" style="max-height: 180px; height:180px;">
+                                    <input type="checkbox" id="selectAllCategories"> <label for="selectAllCategories"><strong>Select All</strong></label>
+                                    {% for category in categories %}
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input filter-input" name="category" value="{{ category.id }}">
+                                            <label class="form-check-label">{{ category.name }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Subcategory Filter -->
+                            <div class="col-md-4 mt-4">
+                                <label>Subcategory:</label>
+                                <input type="text" class="form-control search-filter" placeholder="Search Subcategory..." data-target="subcategoryList">
+                                <div class="border p-2 overflow-auto" style="max-height: 180px; height:180px;">
+                                    <input type="checkbox" id="selectAllSubcategories"> <label for="selectAllSubcategories"><strong>Select All</strong></label>
+                                    {% for i in subcategories %}
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input filter-input" name="subcategory" value="{{ i.id }}">
+                                            <label class="form-check-label">{{ i.name }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Price Filters -->
+                            {% if request.user.is_admin %}
+                            <div class="col-md-6 mt-4">
+                                <label>Vendor Price (Min - Max):</label>
+                                <div class="d-flex">
+                                    <input type="number" name="min_vendor_price" class="form-control filter-input me-2" placeholder="Min">
+                                    <input type="number" name="max_vendor_price" class="form-control filter-input" placeholder="Max">
+                                </div>
+                            </div>
+                            {% endif %}
+                
+                            <div class="col-md-6 mt-4">
+                                <label>MRP (Min - Max):</label>
+                                <div class="d-flex">
+                                    <input type="number" name="min_mrp" class="form-control filter-input me-2" placeholder="Min">
+                                    <input type="number" name="max_mrp" class="form-control filter-input" placeholder="Max">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                
+                    <!-- PRODUCT LIST -->
+                    <div id="productList">
+                        <table class="table mt-3">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Vendor</th>
+                                    <th>Category</th>
+                                    <th>Subcategory</th>
+                                    {% if request.user.is_admin %}
+                                    <th>Vendor Price</th>
+                                    {% endif %}
+                                    <th>MRP</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTableBody">
+                                {% include "partials/product_rows.html" %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Event delegation for Add to PDF buttons
+    document.getElementById('productList').addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-to-pdf') || e.target.closest('.add-to-pdf')) {
+            const button = e.target.classList.contains('add-to-pdf') ? 
+                          e.target : e.target.closest('.add-to-pdf');
+            
+            let productId = button.getAttribute('data-product-id');
+            let url = `{% url 'add_product_to_pdf' 0 %}`.replace('0', productId);
+
+            // Add loading state
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Adding...';
+            button.disabled = true;
+
+            fetch(url, { 
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                // Show toast notification
+                const toast = document.createElement('div');
+                toast.className = 'toast show position-fixed top-0 end-0 m-3';
+                toast.style.zIndex = '1100';
+                toast.innerHTML = `
+                    <div class="toast-header bg-success text-white">
+                        <strong class="me-auto">Success</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${data.message}
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                button.innerHTML = 'Add To PDF';
+                button.disabled = false;
+            });
+        }
+    });
+
+    // Filter functionality
+    $(document).ready(function() {
+        $(".filter-input").on("change keyup", function() {
+            var formData = $("#filterForm").serialize();
+            
+            // Show loading indicator
+            $("#productTableBody").html('<tr><td colspan="8" class="text-center"><div class="spinner-border" role="status"></div></td></tr>');
+            
+            $.ajax({
+                url: "{% url 'filter_products' %}",
+                type: "GET",
+                data: formData,
+                success: function(data) {
+                    $("#productTableBody").html(data);
+                },
+                error: function(xhr, status, error) {
+                    $("#productTableBody").html('<tr><td colspan="8" class="text-center text-danger">Error loading products</td></tr>');
+                }
+            });
+        });
+
+        // Search filter for checkboxes
+        document.querySelectorAll(".search-filter").forEach(input => {
+            input.addEventListener("input", function() {
+                let searchTerm = this.value.toLowerCase();
+                let filterDiv = this.nextElementSibling;
+                let items = filterDiv.querySelectorAll(".form-check");
+                
+                items.forEach(item => {
+                    let label = item.querySelector("label").innerText.toLowerCase();
+                    item.style.display = label.includes(searchTerm) ? "block" : "none";
+                });
+            });
+        });
+
+        // Select All functionality
+        function setupSelectAll(selectAllId, checkboxesSelector) {
+            let selectAll = document.getElementById(selectAllId);
+            
+            function updateSelectAllState() {
+                let checkboxes = document.querySelectorAll(checkboxesSelector);
+                selectAll.checked = checkboxes.length > 0 && [...checkboxes].every(chk => chk.checked);
+            }
+
+            function toggleCheckboxes() {
+                let checkboxes = document.querySelectorAll(checkboxesSelector);
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAll.checked;
+                });
+                // Trigger filter update
+                $(".filter-input").trigger("change");
+            }
+
+            selectAll.addEventListener("change", toggleCheckboxes);
+            document.addEventListener("change", function(event) {
+                if (event.target.matches(checkboxesSelector)) {
+                    updateSelectAllState();
+                }
+            });
+            updateSelectAllState();
+        }
+
+        setupSelectAll("selectAllVendors", "input[name='vendor']");
+        setupSelectAll("selectAllCategories", "input[name='category']");
+        setupSelectAll("selectAllSubcategories", "input[name='subcategory']");
+    });
+</script>
+
+{% endblock %}

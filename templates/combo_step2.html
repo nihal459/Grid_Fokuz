@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Add Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Add Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+
+<style>
+    .center-box {
+        width: 500px;
+        height: 350px;
+        margin: auto;
+        padding: 30px;
+        background: #fff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .container-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+
+    }
+
+    .vendor-list {
+        max-height: 100px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 5px;
+        border-radius: 5px;
+        width: 100%;
+        text-align: left;
+
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        max-width: 250px;
+
+    }
+
+    .form-check label {
+        margin-left: 5px;
+        max-width: 250px;
+
+    }
+
+    .form-control {
+        text-align: center;
+        max-width: 250px;
+    }
+
+    .form-check{
+        width: 200px;
+
+    }
+</style>
+
+<div class="container-wrapper">
+    <div class="center-box">
+        <h2 class="mb-2">Select Vendors</h2>
+
+        <input type="text" id="vendorSearch" class="form-control mb-2" placeholder="Search Vendor...">
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-check mb-2">
+                <input type="checkbox" id="selectAllVendors" class="form-check-input">
+                <label for="selectAllVendors" class="form-check-label"><strong>Select All</strong></label>
+            </div>
+
+            <div class="vendor-list mb-2">
+                {% for vendor in vendors %}
+                <div class="form-check">
+                    <input type="checkbox" name="vendors" value="{{ vendor.id }}" class="form-check-input vendor-checkbox">
+                    <label class="form-check-label">{{ vendor.name }}</label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Next</button>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<script>
+    // Search Filter for Vendors
+    document.getElementById("vendorSearch").addEventListener("input", function () {
+        let searchValue = this.value.toLowerCase();
+        document.querySelectorAll(".vendor-list .form-check").forEach(item => {
+            let label = item.querySelector("label").innerText.toLowerCase();
+            item.style.display = label.includes(searchValue) ? "block" : "none";
+        });
+    });
+
+    // Select All Checkbox
+    document.getElementById("selectAllVendors").addEventListener("change", function () {
+        let isChecked = this.checked;
+        document.querySelectorAll(".vendor-checkbox").forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+    });
+
+    // Ensure "Select All" is updated based on individual selections
+    document.querySelectorAll(".vendor-checkbox").forEach(checkbox => {
+        checkbox.addEventListener("change", function () {
+            let allChecked = [...document.querySelectorAll(".vendor-checkbox")].every(chk => chk.checked);
+            document.getElementById("selectAllVendors").checked = allChecked;
+        });
+    });
+</script>
+{% endblock %}

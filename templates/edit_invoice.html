@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<br>
+<br>
+<br>
+<br>
+
+<div class="container">
+    <h3 class="mt-6">Edit Invoice</h3>
+    <div class="card mt-3">
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-control" name="customer_name" value="{{ invoice.customer_name }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" name="phone_number" value="{{ invoice.phone_number }}" required>
+                </div>
+
+      
+                <div class="mb-3">
+                    <label class="form-label">Salesman</label>
+                    <select class="form-control" name="salesman">
+                        {% for i in salesman %}
+                            <option value="{{ i.name }}" {% if i.name == invoice.salesman %}selected{% endif %}>{{ i.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+  
+
+                <div class="mb-3">
+                    <label class="form-label">Amount Received</label>
+                    <input type="number" step="0.01" class="form-control" name="amount_received" value="{{ invoice.amount_received }}" required>
+                </div>
+
+                <h5 class="mt-4">Edit Ordered Products</h5>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in ordered_products %}
+                        <tr>
+                            <td>{{ product.product.product_name }}</td>
+                            <td>
+                                <input type="number" name="quantity_{{ product.id }}" value="{{ product.product_quantity|floatformat:0 }}" min="1" class="form-control" required>
+
+                                {% comment %} <input type="number" name="quantity_{{ product.id }}" value="{{ product.product_quantity }}" min="1" class="form-control" required> {% endcomment %}
+                            </td>
+                            <td>₹{{ product.product_price }}</td>
+                            <td>
+                                <a href="{% url 'remove_product' product.id %}" class="btn btn-danger btn-sm">Remove</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <a href="{% url 'add_product_to_invoice' invoice.id %}" class="btn btn-success">Add Product</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'invoice_details' invoice.id %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

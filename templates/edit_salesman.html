@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Edit Salesman</h5>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card p-3 mb-4">
+                <h5 class="card-title fw-semibold">Update Salesman Details</h5>
+                <form method="post" action="{% url 'edit_salesman' sales.id %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="salesman_name" class="form-label">Salesman Name</label>
+                            <input type="text" class="form-control" id="salesman_name" name="salesman_name" value="{{ sales.name }}" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="salesman_email" class="form-label">Salesman Email</label>
+                            <input type="email" class="form-control" id="salesman_email" name="salesman_email" value="{{ sales.email }}" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="salesman_phone" class="form-label">Salesman Phone</label>
+                            <input type="text" class="form-control" id="salesman_phone" name="salesman_phone" value="{{ sales.phone_number }}" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="date_of_join" class="form-label">Date Of Join</label>
+                            <input type="date" class="form-control" id="date_of_join" name="date_of_join" value="{{ sales.date_of_join|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Update Salesman</button>
+                    <a href="{% url 'manage_salesman' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

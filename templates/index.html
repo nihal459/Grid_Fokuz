@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-8 d-flex align-items-strech">
+        <div class="card w-100">
+          <div class="card-body">
+            <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
+              <div class="mb-3 mb-sm-0">
+                <h1 class="card-title fw-semibold" style="font-size:35px;">
+                    Welcome, <span style="color:rgb(62, 182, 215);">{{ request.user }}</span>
+                </h1>
+                <br>
+                <h5 class="card-title fw-semibold">to, Grid Fokuz Admin Panel</h5>
+                <br>
+                <h5 class="card-title fw-bold " style="margin-top:170px;">
+                    <span id="liveDate" style="color: #22d265; font-size: 18px;"></span>
+                </h5>
+            </div>
+            
+            <script>
+                function updateDateTime() {
+                    const now = new Date();
+                    const options = { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit' 
+                    };
+                    document.getElementById('liveDate').innerHTML = now.toLocaleDateString('en-US', options);
+                }
+            
+                // Update time every second
+                setInterval(updateDateTime, 1000);
+            
+                // Initial call to display immediately
+                updateDateTime();
+            </script>
+            
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-9 fw-semibold">Total Number Of Products</h5>
+                        <h4 class="fw-semibold mb-3">{{ total_products }}</h4>
+                        <div class="col-12">
+                          <div class="d-flex justify-content-end">
+                              <div class="text-white bg-secondary rounded-circle p-6 d-flex align-items-center justify-content-center">
+                                  <i class="ti ti-shopping-cart fs-6"></i>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-12">
+              <div class="card">
+                  <div class="card-body">
+                      <h5 class="card-title mb-9 fw-semibold">Total Number Of Vendors</h5>
+                      <h4 class="fw-semibold mb-3">{{ total_vendors }}</h4>
+                      <div class="col-12">
+                        <div class="d-flex justify-content-end">
+                            <div class="text-white bg-secondary rounded-circle p-6 d-flex align-items-center justify-content-center">
+                                <i class="ti ti-users fs-6"></i>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-6 d-flex align-items-stretch mt-4">
+        <div class="card w-100">
+          <div class="card-body p-4">
+            <h5 class="card-title fw-semibold mb-4">Products Distribution</h5>
+            <canvas id="productChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 d-flex align-items-stretch mt-4">
+        <div class="card w-100">
+            <div class="card-body p-4">
+                <h5 class="card-title fw-semibold mb-4">Products by Subcategory</h5>
+                <canvas id="subcategoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+
+      <script>
+        var ctx = document.getElementById('productChart').getContext('2d');
+        var productData = {
+          labels: [
+            {% for category in products_by_category %}
+              "{{ category.product_category__name }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          ],
+          datasets: [{
+            label: 'Products by Category',
+            data: [
+              {% for category in products_by_category %}
+                {{ category.count }}{% if not forloop.last %},{% endif %}
+              {% endfor %}
+            ],
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.2)', 
+              'rgba(54, 162, 235, 0.2)', 
+              'rgba(255, 206, 86, 0.2)', 
+              'rgba(75, 192, 192, 0.2)', 
+              'rgba(153, 102, 255, 0.2)', 
+              'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+              'rgba(255, 99, 132, 1)', 
+              'rgba(54, 162, 235, 1)', 
+              'rgba(255, 206, 86, 1)', 
+              'rgba(75, 192, 192, 1)', 
+              'rgba(153, 102, 255, 1)', 
+              'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+          }]
+        };
+        
+        var productChart = new Chart(ctx, {
+          type: 'pie',
+          data: productData,
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'top',
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(tooltipItem) {
+                    return tooltipItem.label + ': ' + tooltipItem.raw;
+                  }
+                }
+              }
+            }
+          }
+        });
+
+
+
+
+            // Pie Chart for Subcategories
+          var subcategoryCtx = document.getElementById('subcategoryChart').getContext('2d');
+          var subcategoryChart = new Chart(subcategoryCtx, {
+              type: 'pie',
+              data: {
+                  labels: [
+                      {% for sub in subcategory_data %}
+                          "{{ sub.product_subcategory__name }}"{% if not forloop.last %}, {% endif %}
+                      {% endfor %}
+                  ],
+                  datasets: [{
+                      label: 'Products by Subcategory',
+                      data: [
+                          {% for sub in subcategory_data %}
+                              {{ sub.count }}{% if not forloop.last %}, {% endif %}
+                          {% endfor %}
+                      ],
+                      backgroundColor: [
+                          'rgba(255, 99, 132, 0.6)',
+                          'rgba(54, 162, 235, 0.6)',
+                          'rgba(255, 206, 86, 0.6)',
+                          'rgba(75, 192, 192, 0.6)',
+                          'rgba(153, 102, 255, 0.6)',
+                          'rgba(255, 159, 64, 0.6)'
+                      ]
+                  }]
+              }
+          });
+      </script>
+    </div>
+  </div>
+{% endblock %}

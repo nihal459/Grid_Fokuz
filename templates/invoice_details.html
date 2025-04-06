@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<br>
+<br>
+<br>
+<br>
+<div class="container">
+    <h3 class="mt-6">Invoice Details</h3>
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Invoice ID: {{ invoice.id }}</h5>
+            <p><strong>Customer:</strong> {{ invoice.customer_name }}</p>
+            <p><strong>Salesman:</strong> {{ invoice.salesman }}</p>
+            <p><strong>Phone Number:</strong> {{ invoice.phone_number }}</p>
+            <p><strong>Checkout Date:</strong> {{ invoice.checkout_date|date:"d/m/y" }}</p>
+            <p><strong>Total Amount:</strong> ₹{{ invoice.total_price }}</p>
+            <p><strong>Received Amount:</strong> ₹{{ invoice.amount_received }}</p>
+            <p><strong>Remaining Amount:</strong> ₹{{ invoice.amount_remaining }}</p>
+            
+            <p><strong>Payment Status:</strong>
+                {% if invoice.payment_status %}
+                    <span class="badge bg-success">Paid</span>
+                {% else %}
+                    <span class="badge bg-warning">Pending</span>
+                {% endif %}
+            </p>
+
+            <h5 class="mt-4">Ordered Products</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in ordered_products %}
+                    <tr>
+                        <td>{{ product.product.product_name }}</td>
+                        <td>{{ product.product_quantity }}</td>
+                        <td>₹{{ product.product_price }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No products found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <a href="{% url 'manage_invoices' %}" class="btn btn-secondary">Back to Invoices</a>
+            <a href="{% url 'edit_invoice' invoice.id %}" class="btn btn-warning">Edit</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

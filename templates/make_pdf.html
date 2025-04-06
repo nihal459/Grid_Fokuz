@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+
+
+    .logo_container2
+    {
+      padding-left:650px;
+    }
+
+    .logo_container3
+    {
+      padding-left:320px;
+      background-color:none;
+    }
+
+
+    .logo_container4
+    {
+      padding-left:600px;
+      background-color:white;
+      padding-top:-188px;
+    }
+
+
+  </style>
+</head>
+<body>
+  <div style="padding:12px;">
+    <img src="{{ logo1.image.path }}" alt="logo">
+  </div>
+  <br>
+
+
+  {% for item in cart_items %}
+  <div class="logo_container2">
+      <img src="{{ logo2.image.path }}" alt="" height="50px">
+  </div>
+  <br><br>
+  
+  <div class="image_container">
+      {% if item.product.product_image %}
+          <img src="{{ item.product.product_image.path }}" alt="" width="1000px" height="1000px">
+      {% else %}
+          <p>No image available</p>
+      {% endif %}
+  </div>
+  <br>
+  
+  <div class="details">
+      {% if include_branding_cost %}
+          <h2 style="color:black;">Branding Cost: Rs.{{ item.branding_cost|floatformat:2 }}/-</h2>
+      {% else %}    
+          <h2 style="color:white;">.</h2>
+      {% endif %}
+  
+      {% if include_branding_category %}
+          <h2 style="color:black;">Branding Category: {{ item.branding_category }}</h2>
+      {% else %}    
+          <h2 style="color:white;">.</h2>
+      {% endif %}
+  
+      {% if include_transportation_cost %}
+          <h2 style="color:black;">Transportation Cost: Rs.{{ item.transportation_cost|floatformat:2 }}/-</h2>
+      {% else %}    
+          <h2 style="color:white;">.</h2>
+      {% endif %}
+  
+      {% if include_tax_percentage %}
+          <h2 style="color:black;">Tax: {{ item.tax_precentage|floatformat:0 }}%</h2>
+      {% else %}    
+          <h2 style="color:white;">.</h2>
+      {% endif %}
+  
+      {% if include_price %}
+          <h2 style="color:blue;"><b>Total Price: Rs.{{ item.price|floatformat:2 }}/- (All Inclusive)</b></h2>
+      {% else %}    
+          <h2 style="color:white;">.</h2>
+      {% endif %}
+  </div>
+  
+  <img src="{{ logo4.image.path }}" alt="" height="50px">
+  
+  <div class="logo_container4">
+      <img src="{{ logo6.image.path }}" alt="" height="200px">
+  </div>
+  
+  <img src="{{ logo4.image.path }}" alt="" height="50px">
+  {% endfor %}
+  
+
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <img src="{{ logo3.image.path }}" alt="" height="1000px">
+  <br>
+  <br>
+  <br>
+  <br>
+  <div class="logo_container3">
+    <img src="{{ logo6.image.path }}" alt="" height="250px">
+  </div>
+
+  <img src="{{ Logos.footer.image.path }}" alt=""></a>
+
+  <img src="{{ logo5.image.path }}" alt="Logo">
+
+</body>
+</html>

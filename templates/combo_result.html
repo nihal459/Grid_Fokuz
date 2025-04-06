@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block content %}
+<br><br><br><br>
+
+<div class="container text-center">
+    <p style="color:red;" id="error-msg">{{ error }}</p>
+
+    <h2>Generated Combos</h2>
+    <a href="{% url 'combo_pdf' %}" class="btn btn-primary">Back To Combo Page</a>
+
+    {% for combo in combos %}
+    <div class="card my-3">
+        <div class="card-header">Combo {{ forloop.counter }}</div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product Image</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Vendor</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in combo %}
+                    <tr>
+                        <td><img src="{{ product.product_image.url }}" height="50px"></td>
+                        <td>{{ product.product_name }}</td>
+                        <td>{{ product.product_category.name }}</td>
+                        <td>{{ product.vendor.name }}</td>
+                        <td>{{ product.vendor_price }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning add-to-cart-btn" data-product-id="{{ product.pk }}">
+                                Add To Pdf
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <td>
+                <button class="btn btn-sm btn-warning add-whole-combo-btn">
+                    Add Whole Combo To Pdf
+                </button>
+            </td>
+            
+                    
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- AJAX Script -->
+<script>
+    // Single event delegation for all cart buttons
+    document.addEventListener('click', function(e) {
+        // Handle single product add
+        if (e.target.classList.contains('add-to-cart-btn')) {
+            const btn = e.target;
+            const productId = btn.dataset.productId;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            fetch(`{% url 'add_to_cart3' 0 %}`.replace('0', productId), {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                btn.innerHTML = 'Added';
+                showToast(data.message);
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = 'Add To Cart';
+                showToast(error.message, 'danger');
+            });
+        }
+
+        // Handle whole combo add
+        if (e.target.classList.contains('add-whole-combo-btn')) {
+            const btn = e.target;
+            const productIds = [];
+            
+            btn.closest('.card-body').querySelectorAll('[data-product-id]').forEach(el => {
+                productIds.push(el.dataset.productId);
+            });
+
+            if (!productIds.length) {
+                showToast('No products in this combo', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            fetch("{% url 'add_whole_combo_to_cart' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ product_ids: productIds })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Server error');
+                return response.json();
+            })
+            .then(data => {
+                btn.innerHTML = 'Combo Added';
+                showToast(`${data.message}<br>
+                    Added: ${data.results.added.join(', ')}<br>
+                    Existing: ${data.results.existing.join(', ')}`);
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = 'Add Whole Combo';
+                showToast(error.message, 'danger');
+            });
+        }
+    });
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast show position-fixed bottom-0 end-0 m-3 bg-${type}`;
+        toast.style.zIndex = '1100';
+        toast.innerHTML = `
+            <div class="toast-body text-white">
+                <button type="button" class="btn-close btn-close-white float-end" data-bs-dismiss="toast"></button>
+                ${message}
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+</script>
+
+
+
+{% endblock %}
+
+
+

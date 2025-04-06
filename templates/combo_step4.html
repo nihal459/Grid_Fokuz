@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    .center-box {
+        width: 500px;
+        height: 350px;
+        margin: auto;
+        padding: 30px;
+        background: #fff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .container-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .form-control {
+        text-align: center;
+        max-width: 250px;
+    }
+</style>
+
+<div class="container-wrapper">
+    <div class="center-box">
+        <h2 class="mb-3">Number of Combos</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="combo_count">Enter Number of Combos:</label>
+            <input type="number" name="combo_count" class="form-control mb-2" required>
+
+            <label for="min_products">Minimum Products in a Combo:</label>
+            <input type="number" name="min_products" class="form-control mb-2" value="1" min="1" required>
+
+            <button type="submit" class="btn btn-primary w-100">Create Combo</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Fokuz - PDF Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- jQuery UI CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+    
+    <!-- jQuery and jQuery UI -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>    
+    <style>
+        /* General Styling */
+        body {
+            background-color: #f7f7f7;
+            font-family: Arial, sans-serif;
+        }
+
+        .box-shadow {
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2); /* Darker Shadow */
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .header-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1c3d63; /* Dark blue */
+        }
+
+        .btn-custom {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .btn-custom:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-danger-custom {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        .btn-danger-custom:hover {
+            background-color: #c82333;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f9f9f9;
+        }
+
+        .form-control {
+            border-radius: 5px;
+        }
+
+        .form-label {
+            font-weight: 600;
+        }
+
+        .total-info {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .col-md-4, .col-md-8 {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .col-md-4 {
+            max-width: 400px;
+            max-height:200px;
+            margin-right:10px;
+        }
+
+        .col-md-8 {
+            max-width: 1500px;
+        }
+
+        .form-control-sm {
+            font-size: 0.85rem;
+        }
+
+        /* Adjust for smaller content */
+        .box-shadow .form-control {
+            font-size: 0.9rem;
+        }
+        .ui-autocomplete {
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+        }
+        .ui-menu-item {
+            padding: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+{% if request.user.is_authenticated %}
+
+    <nav class="navbar bg-body-tertiary">
+        <div class="container">
+          <a class="navbar-brand" href="{% url 'index' %}">
+            <img src="{% static 'assets/images/logos/logo2.png' %}" alt="Bootstrap" width="120" >
+          </a>
+        </div>
+    </nav>
+
+<div class="container mt-5">
+    <div class="row">
+        <!-- Left Div: Product & Sales Information -->
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="col-md-4 box-shadow text-center p-4">
+                <h5 class="header-text">Quick Product Add Section</h5>
+                <div class="mb-3 mt-4">
+                    <form method="post" action="{% url 'add_to_cart' %}">
+                        {% csrf_token %}
+                        <label for="product_name" class="form-label">Product Name</label>
+                        <input type="text" name="product_name" class="form-control form-control-sm" id="product_name">
+                        <button type="submit" class="btn btn-custom mt-3 btn-sm w-100">Add Product</button>
+                    </form>
+                </div>
+        
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        
+
+        <!-- Right Div: Customer & Product Info -->
+        <div class="col-md-8 box-shadow" style="width:1320px;">
+            <h5 class="header-text">Create PDF Section</h5>
+            <!-- Customer Info -->
+
+
+            <script>
+                $("#product_name").autocomplete({
+                    source: function(request, response) {
+                        $.ajax({
+                            url: "{% url 'search_products' %}",  // Use URL name
+                            dataType: "json",
+                            data: { 
+                                term: request.term,
+                                csrfmiddlewaretoken: '{{ csrf_token }}'  // Add CSRF token
+                            },
+                            success: function(data) {
+                                response(data);
+                            },
+                            error: function(xhr, status, error) {
+                                console.error("Error:", error);
+                            }
+                        });
+                    },
+                    minLength: 1,
+                    select: function(event, ui) {
+                        $("#product_name").val(ui.item.value);
+                        return false;
+                    }
+                });
+            </script>
+
+            <hr>
+
+            <!-- Product Info Table -->
+            <h5 class="header-text">Product Info</h5>
+            <table class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        <th scope="col">Product Name</th>
+                        {% if request.user.is_staff %}
+                            <th scope="col"></th>
+                        {% elif request.user.is_admin %}
+                            <th scope="col">Vendor Price</th>
+                        {% endif %}
+                        <th scope="col">MRP</th>
+                        <th scope="col">Profit Amount</th>
+                        <th scope="col">Branding Cost</th>
+                        <th scope="col">Branding Category</th>
+                        <th scope="col">Transportation Cost</th>
+                        <th scope="col">Tax Percentage</th>
+                        <th scope="col">Total Price</th>
+
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="product-info">
+                    {% for item in cart_items %}
+                    <tr data-id="{{ item.id }}">
+                        <td>{{ item.product.product_name }}</td>
+                        {% if request.user.is_staff %}
+                            <td>
+                                <input type="number" class="form-control form-control-sm vendor-price" value="{{ item.product.vendor_price }}" style="display: none;" disabled>
+                            </td>
+
+                        {% elif request.user.is_admin %}
+                            <td>
+                                <input type="number" class="form-control form-control-sm vendor-price" value="{{ item.product.vendor_price }}" style="display: none;" disabled>
+                            </td>
+                        {% endif %}
+                        <td>
+                            <input type="number" class="form-control form-control-sm mrp" value="{{ item.product.mrp }}" min="1" >
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm profit-amount" value="{{ item.profit_amount }}">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm branding-cost" value="{{ item.branding_cost }}">
+                        </td>
+                        <td>
+                            <select class="form-control form-control-sm branding-category">
+                                <option value="Nil" {% if item.branding_category == "Nil" %}selected{% endif %}>Nil</option>
+                                <option value="Screen Print" {% if item.branding_category == "Screen Print" %}selected{% endif %}>Screen Print</option>
+                                <option value="Pigment Print" {% if item.branding_category == "Pigment Print" %}selected{% endif %}>Pigment Print</option>
+                                <option value="Sublimation Print" {% if item.branding_category == "Sublimation Print" %}selected{% endif %}>Sublimation Print</option>
+                                <option value="UV Print" {% if item.branding_category == "UV Print" %}selected{% endif %}>UV Print</option>
+                                <option value="Embroidary" {% if item.branding_category == "Embroidary" %}selected{% endif %}>Embroidary</option>
+                                <option value="Engraving" {% if item.branding_category == "Engraving" %}selected{% endif %}>Engraving</option>
+                                <option value="Wood Engraving" {% if item.branding_category == "Wood Engraving" %}selected{% endif %}>Wood Engraving</option>
+                                <option value="Embossing" {% if item.branding_category == "Embossing" %}selected{% endif %}>Embossing</option>
+                                <option value="Debossing" {% if item.branding_category == "Debossing" %}selected{% endif %}>Debossing</option>
+                                <option value="Laser Marking" {% if item.branding_category == "Laser Marking" %}selected{% endif %}>Laser Marking</option>
+                                <option value="Rubber Print" {% if item.branding_category == "Rubber Print" %}selected{% endif %}>Rubber Print</option>
+                                <option value="Sticker Print" {% if item.branding_category == "Sticker Print" %}selected{% endif %}>Sticker Print</option>
+                                <option value="Screen Fusing" {% if item.branding_category == "Screen Fusing" %}selected{% endif %}>Screen Fusing</option>
+                            </select>
+                        </td>
+                        
+                        <td>
+                            <input type="text" class="form-control form-control-sm transportation-cost" value="{{ item.transportation_cost }}">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm tax-percentage" value="{{ item.tax_precentage }}">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm total-price" value="{{ item.price }}">
+                        </td>
+                        <td>
+                            <button class="btn btn-danger-custom btn-sm mt-2" onclick="removeProduct(this)">Remove</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Discount and Total -->
+            <div class="total-info">
+
+            
+                <div class="mb-3">
+                    <label for="grand_total" class="form-label">Grand Total</label>
+                    <input type="text" class="form-control form-control-sm" id="grand_total" value="0" disabled>
+                </div>
+
+
+            </div>
+
+
+            <!-- Checkboxes to control PDF fields -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h5>Select Fields to Include in PDF</h5>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeBrandingCost" checked>
+                        <label class="form-check-label" for="includeBrandingCost">Include Branding Cost</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeBrandingCategory" checked>
+                        <label class="form-check-label" for="includeBrandingCategory">Include Branding Category</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeTransportationCost" checked>
+                        <label class="form-check-label" for="includeTransportationCost">Include Transportation Cost</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeTaxPercentage" checked>
+                        <label class="form-check-label" for="includeTaxPercentage">Include Tax Percentage</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includePrice" checked>
+                        <label class="form-check-label" for="includePrice">Include Price</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Invoice Button -->
+            {% comment %} <button class="btn btn-success btn-lg w-100 mt-4">Save Invoice</button> {% endcomment %}
+            <button class="btn btn-warning btn-lg w-100 mt-4" onclick="downloadPDF()">Make PDF</button>
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+    function downloadPDF() {
+        const brandingCost = document.getElementById('includeBrandingCost').checked ? 1 : 0;
+        const brandingCategory = document.getElementById('includeBrandingCategory').checked ? 1 : 0;
+        const transportationCost = document.getElementById('includeTransportationCost').checked ? 1 : 0;
+        const taxPercentage = document.getElementById('includeTaxPercentage').checked ? 1 : 0;
+        const price = document.getElementById('includePrice').checked ? 1 : 0;
+
+        const url = `{% url 'generate_cart_pdf' %}?branding_cost=${brandingCost}&branding_category=${brandingCategory}&transportation_cost=${transportationCost}&tax_percentage=${taxPercentage}&price=${price}`;
+        window.location.href = url;
+    }
+
+
+
+    function updateCartItem(input) {
+        const row = input.closest('tr');
+        const itemId = row.getAttribute('data-id');
+        const newQuantity = parseInt(input.value);
+        const unitPrice = parseFloat(row.querySelector('.unit-price').value);
+
+        // AJAX request to update quantity
+        fetch('/update-cart-item/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                'item_id': itemId,
+
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                row.querySelector('.total-price').value = data.updated_price;
+                updateTotalPrice();
+            } else {
+                alert('Error updating cart item');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function removeProduct(button) {
+        const row = button.closest('tr');
+        const itemId = row.getAttribute('data-id');
+    
+        // AJAX request to remove item from cart
+        fetch("{% url 'remove_from_cart' %}", {  // Use URL name
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ 'item_id': itemId }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                row.remove();
+                updateGrandTotal();  // Update the grand total after removal
+            } else {
+                alert('removing product');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('removing product');
+        });
+    }
+
+    window.onload = updateTotalPrice;
+</script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const productRows = document.querySelectorAll("#product-info tr");
+    
+        productRows.forEach(row => {
+            row.addEventListener("input", function () {
+                calculateTotalPrice(row);
+                updateCartInDatabase(row);
+                updateGrandTotal();
+            });
+        });
+    
+        function calculateTotalPrice(row) {
+            const vendorPrice = parseFloat(row.querySelector(".vendor-price").value) || 0;
+            const mrp = parseFloat(row.querySelector(".mrp").value) || 0;
+            const profitAmount = parseFloat(row.querySelector(".profit-amount").value) || 0;
+            const brandingCost = parseFloat(row.querySelector(".branding-cost").value) || 0;
+            const transportationCost = parseFloat(row.querySelector(".transportation-cost").value) || 0;
+            const taxPercentage = parseFloat(row.querySelector(".tax-percentage").value) || 0;
+    
+            // Calculate subtotal (before tax)
+            const subtotal = vendorPrice + profitAmount + brandingCost + transportationCost;
+            
+            // Calculate tax amount (tax is applied to subtotal)
+            const taxAmount = (taxPercentage / 100) * subtotal;
+            
+            // Calculate total price
+            const totalPrice = subtotal + taxAmount;
+    
+            // Update total price field
+            row.querySelector(".total-price").value = totalPrice.toFixed(2);
+            
+            // Update MRP field if needed (optional)
+            if (mrp < totalPrice) {
+                row.querySelector(".mrp").value = totalPrice.toFixed(2);
+            }
+        }
+    
+        function updateGrandTotal() {
+            let grandTotal = 0;
+            document.querySelectorAll(".total-price").forEach(input => {
+                grandTotal += parseFloat(input.value) || 0;
+            });
+            document.getElementById("grand_total").value = grandTotal.toFixed(2);
+        }
+    
+        function updateCartInDatabase(row) {
+            const itemId = row.getAttribute("data-id");
+            const vendorPrice = parseFloat(row.querySelector(".vendor-price").value) || 0;
+            const mrp = parseFloat(row.querySelector(".mrp").value) || 0;
+            const profitAmount = parseFloat(row.querySelector(".profit-amount").value) || 0;
+            const brandingCost = parseFloat(row.querySelector(".branding-cost").value) || 0;
+            const transportationCost = parseFloat(row.querySelector(".transportation-cost").value) || 0;
+            const taxPercentage = parseFloat(row.querySelector(".tax-percentage").value) || 0;
+            const brandingCategory = row.querySelector(".branding-category").value;
+            const totalPrice = parseFloat(row.querySelector(".total-price").value) || 0;
+    
+            fetch("{% url 'update_cart_item' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                },
+                body: JSON.stringify({
+                    "item_id": itemId,
+                    "vendor_price": vendorPrice,
+                    "mrp": mrp,
+                    "profit_amount": profitAmount,
+                    "branding_cost": brandingCost,
+                    "transportation_cost": transportationCost,
+                    "tax_percentage": taxPercentage,
+                    "branding_category": brandingCategory,
+                    "total_price": totalPrice
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error("Error updating cart item:", data.error);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    });
+</script>
+
+{% else %}
+
+
+<div class="container-fluid">
+  <h1>Unauthorized access</h1>
+</div>
+
+{% endif %}
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

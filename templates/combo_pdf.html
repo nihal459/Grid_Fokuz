@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .center-box {
+        width: 500px;
+        height: 350px;
+        margin: auto;
+        padding: 30px;
+        background: #fff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .container-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 70vh;
+    }
+
+    .form-control {
+        text-align: center;
+        width: 100%;
+        max-width: 250px;
+    }
+</style>
+<br>
+<br>
+<br>
+<br>
+<h1 class="text-center">Make Your Combo Products</h1>
+<div class="container-wrapper">
+    
+    <div class="center-box">
+
+        <h2 class="mb-3">Select Price Range</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="price_range" class="form-label">Enter Maximum Price:</label>
+                <input type="number" name="price_range" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Next</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

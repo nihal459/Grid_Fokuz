@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Manage Units</h5>
+
+            <div class="text-center mb-4">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUnitModal">Add New Unit</button>
+            </div>
+
+            <!-- Table -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-semibold mb-4">Current Units
+                        <span><a href="{% url 'manage_units' %}"><i class="ti ti-refresh"></i></a></span>
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Unit ID</th>
+                                    <th scope="col">Unit Type</th>
+                                    <th scope="col">Edit</th>
+                                    <th scope="col">Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit in units %}
+                                <tr>
+                                    <td>{{ unit.id }}</td>
+                                    <td>{{ unit.unit_type }}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm edit-unit-btn" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editUnitModal" 
+                                                data-id="{{ unit.id }}" 
+                                                data-name="{{ unit.unit_type }}">Edit</button>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'delete_unit' unit.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this unit?');">Delete</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No units found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Add Unit Modal -->
+<div class="modal fade" id="addUnitModal" tabindex="-1" aria-labelledby="addUnitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addUnitForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUnitModalLabel">Add Unit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="add-unit-error" class="alert alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label for="unit_name" class="form-label">Unit Name</label>
+                        <input type="text" class="form-control" id="unit_name" name="unit_name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add Unit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Unit Modal -->
+<div class="modal fade" id="editUnitModal" tabindex="-1" aria-labelledby="editUnitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editUnitForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUnitModalLabel">Edit Unit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="edit-unit-error" class="alert alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label for="edit_unit_name" class="form-label">Unit Name</label>
+                        <input type="text" class="form-control" id="edit_unit_name" name="unit_name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ADD UNIT AJAX
+    document.getElementById('addUnitForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+
+        fetch("{% url 'manage_units' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('add-unit-error').textContent = data.error;
+                document.getElementById('add-unit-error').classList.remove('d-none');
+            } else {
+                location.reload();
+            }
+        });
+    });
+
+    // EDIT UNIT MODAL
+    document.querySelectorAll('.edit-unit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            var unitId = this.getAttribute('data-id');
+            var unitName = this.getAttribute('data-name');
+
+            document.getElementById('editUnitForm').setAttribute('action', `{% url 'edit_unit' 0 %}`.replace("0", unitId));
+            document.getElementById('edit_unit_name').value = unitName;
+            document.getElementById('edit-unit-error').classList.add('d-none');
+        });
+    });
+
+    // EDIT UNIT AJAX
+    document.getElementById('editUnitForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('edit-unit-error').textContent = data.error;
+                document.getElementById('edit-unit-error').classList.remove('d-none');
+            } else {
+                location.reload();
+            }
+        });
+    });
+
+});
+</script>
+
+{% endblock %}
