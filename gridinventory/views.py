@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from decimal import Decimal
 from django.db.models import Q
+import os 
 # Create your views here.
 
 
@@ -244,8 +245,16 @@ def edit_material(request, pk):
 
     return redirect("manage_products")  # Redirect in case of GET request
 
-
 def delete_material(request, pk):
     material = get_object_or_404(Inventory, pk=pk)
+
+    # Delete image file from the media folder if it exists
+    if material.product_image:
+        image_path = material.product_image.path
+        if os.path.isfile(image_path):
+            os.remove(image_path)
+
+    # Now delete the Inventory record
     material.delete()
+
     return redirect("manage_products")
